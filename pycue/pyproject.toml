@@ -10,8 +10,7 @@ version = "1.13.8"
 # dynamic = ["version"]  # Commented out for deployment without git
 dependencies = [
     "opencue_proto",
-    "PyYAML==6.0.1",
-    "six==1.16.0",
+    "PyYAML>=6.0.1",
     "future==1.0.0"
 ]
 requires-python = ">3.7"
