@@ -93,6 +93,7 @@ class LimitsTreeWidget(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     """Tree widget for displaying a list of limits."""
 
     def __init__(self, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
         self.startColumnsForType(cuegui.Constants.TYPE_LIMIT)
         self.addColumn("Limit Name", 90, id=1,
                        data=lambda limit: limit.name())
@@ -102,8 +103,7 @@ class LimitsTreeWidget(cuegui.AbstractTreeWidget.AbstractTreeWidget):
         self.addColumn("Current Running", 80, id=2,
                        data=lambda limit: ("%d" % limit.currentRunning()),
                        sort=lambda limit: limit.currentRunning())
-
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+        self._finalizeColumns()
 
         # Used to build right click context menus
         self.__menuActions = cuegui.MenuActions.MenuActions(

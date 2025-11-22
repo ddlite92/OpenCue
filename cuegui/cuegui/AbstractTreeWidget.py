@@ -102,7 +102,9 @@ class AbstractTreeWidget(QtWidgets.QTreeWidget):
 
         self.setItemDelegate(cuegui.ItemDelegate.ItemDelegate(self))
 
-        self.__setupColumns()
+        # Only setup columns if they have been defined by the subclass
+        if hasattr(self, '_AbstractTreeWidget__columnInfoByType'):
+            self.__setupColumns()
 
         self.__setupColumnMenu()
 
@@ -171,6 +173,13 @@ class AbstractTreeWidget(QtWidgets.QTreeWidget):
 
         columnsInfo = self.__columnInfoByType[self.__columnCurrent]
         columnsInfo.append([name, width, data, sort, delegate, tip, default, id])
+
+    def _finalizeColumns(self):
+        """Call this after all columns have been added to set up the tree widget.
+        This is automatically called by __init__ if columns were set up before,
+        but subclasses that set up columns after calling super().__init__ must
+        call this manually."""
+        self.__setupColumns()
 
     def __setupColumns(self):
         """Setup the QTreeWidget based on the column information"""
@@ -334,11 +343,16 @@ class AbstractTreeWidget(QtWidgets.QTreeWidget):
         """Removes an item from the TreeWidget without locking
         @type  item: AbstractTreeWidgetItem or String
         @param item: A tree widget item or the string with the id of the item"""
-        if item in self._items:
-            item = self._items[item]
-        elif not isinstance(item, cuegui.AbstractWidgetItem.AbstractWidgetItem):
-            # if the parent was already deleted, then this one was too
-            return
+        # Avoid hashing a QTreeWidgetItem (may be unhashable if __eq__ defined).
+        # First branch: string key. Second branch: already an item instance.
+        if isinstance(item, cuegui.AbstractWidgetItem.AbstractWidgetItem):
+            pass  # already have the item instance
+        else:
+            if item in self._items:
+                item = self._items[item]
+            else:
+                # if the parent was already deleted, then this one was too
+                return
 
         # If it has children, they must be deleted first
         if item.childCount() > 0:

@@ -150,6 +150,7 @@ class FilterMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     """Tree displaying a list of filters."""
 
     def __init__(self, show, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
         self.startColumnsForType(cuegui.Constants.TYPE_FILTER)
         self.addColumn("Order", 100, id=1,
                        data=lambda filter:(filter.data.order),
@@ -158,10 +159,9 @@ class FilterMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
         self.addColumn("Filter Name", 270, id=3,
                        data=lambda filter:(filter.data.name))
         self.addColumn("Type", 100, id=4)
+        self._finalizeColumns()
 
         self.__show = show
-
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
 
         self.hideColumn(0)
         self.setSortingEnabled(False)
@@ -214,6 +214,7 @@ class MatcherMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     """Tree for displaying a list of filter matchers."""
 
     def __init__(self, parent_filter, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
         self.startColumnsForType(cuegui.Constants.TYPE_MATCHER)
         self.addColumn("Matcher Subject", 130, id=1,
                        data=lambda matcher:(matcher.subject()))
@@ -222,10 +223,9 @@ class MatcherMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
         self.addColumn("Input", 130, id=3,
                        data=lambda matcher:(matcher.input()))
         self.addColumn("", 20, id=4)
+        self._finalizeColumns()
 
         self.__filter = parent_filter
-
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
 
         # Used to build right click context menus
         # pylint: disable=unused-private-member
@@ -373,6 +373,7 @@ class ActionMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     """Tree for displaying a list of actions."""
 
     def __init__(self, show, parent_filter, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
         self.startColumnsForType(cuegui.Constants.TYPE_ACTION)
         self.addColumn(
             "Action Type",
@@ -381,11 +382,10 @@ class ActionMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
             data=lambda action: (opencue_proto.filter_pb2.ActionType.Name(action.type())))
         self.addColumn("", 180, id=2)
         self.addColumn("", 20, id=3)
+        self._finalizeColumns()
 
         self.__show = show
         self.__filter = parent_filter
-
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
 
         self.groupNames = {}
         self.groupIds = {}

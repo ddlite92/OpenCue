@@ -274,6 +274,9 @@ UNDERLINE_HIGHLIGHT = 'background-color: rgb(10, 90, 240);'
 def setFont(font):
     """sets the application font"""
     global Font
+    # Accept either a QFont instance or a string family name
+    if isinstance(font, str):
+        font = QtGui.QFont(font)
     Font = font
     # pylint: disable=no-member
     QtGui.qApp.setFont(font)

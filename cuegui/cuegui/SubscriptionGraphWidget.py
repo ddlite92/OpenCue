@@ -163,13 +163,14 @@ class SubGraphTreeWidget(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     """Tree for displaying a subscription graph."""
 
     def __init__(self, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
         self.startColumnsForType(cuegui.Constants.TYPE_SUB)
         self.addColumn("_Name", 110, id=0,
                        data=lambda sub: sub.data.allocation_name)
         self.addColumn("_Booking Bar", 125, id=1,
                        delegate=cuegui.ItemDelegate.SubBookingBarDelegate,
                        data=lambda sub: opencue.api.findAllocation(sub.data.allocation_name))
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+        self._finalizeColumns()
 
         self.header().hide()
         self.__show = None

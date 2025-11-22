@@ -39,6 +39,7 @@ class ShowsWidget(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     """Tree widget for displaying a list of shows."""
 
     def __init__(self, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
         self.startColumnsForType(cuegui.Constants.TYPE_SHOW)
         self.addColumn("Show Name", 90, id=1,
                        data=lambda show: (show.data.name))
@@ -54,8 +55,7 @@ class ShowsWidget(cuegui.AbstractTreeWidget.AbstractTreeWidget):
         self.addColumn("Jobs", 80, id=5,
                        data=lambda show: (show.data.show_stats.pending_jobs),
                        sort=lambda show: (show.data.show_stats.pending_jobs))
-
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+        self._finalizeColumns()
 
         # Used to build right click context menus
         self.__menuActions = cuegui.MenuActions.MenuActions(

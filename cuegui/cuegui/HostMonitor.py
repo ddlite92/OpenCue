@@ -119,9 +119,7 @@ class HostMonitor(QtWidgets.QWidget):
         btn.setFixedWidth(24)
         layout.addWidget(btn)
         # pylint: disable=no-member
-        QtCore.QObject.connect(btn,
-                               QtCore.SIGNAL('clicked()'),
-                               self.__filterByHostNameClear)
+        btn.clicked.connect(self.__filterByHostNameClear)
         # pylint: disable=unused-private-member
         self.__filterByHostNameClearBtn = btn
 
@@ -156,9 +154,7 @@ class HostMonitor(QtWidgets.QWidget):
         menu = QtWidgets.QMenu(self)
         btn.setMenu(menu)
         # pylint: disable=no-member
-        QtCore.QObject.connect(menu,
-                               QtCore.SIGNAL("triggered(QAction*)"),
-                               self.__filterAllocationHandle)
+        menu.triggered.connect(self.__filterAllocationHandle)
 
         for item in ["Clear", None] + self.__filterAllocationList:
             if item:
@@ -220,9 +216,7 @@ class HostMonitor(QtWidgets.QWidget):
         # pylint: disable=no-member
         menu = QtWidgets.QMenu(self)
         btn.setMenu(menu)
-        QtCore.QObject.connect(menu,
-                               QtCore.SIGNAL("triggered(QAction*)"),
-                               self.__filterHardwareStateHandle)
+        menu.triggered.connect(self.__filterHardwareStateHandle)
         # pylint: enable=no-member
         for item in ["Clear", None] + self.__filterHardwareStateList:
             if item:
@@ -284,9 +278,7 @@ class HostMonitor(QtWidgets.QWidget):
 
         menu = QtWidgets.QMenu(self)
         btn.setMenu(menu)
-        QtCore.QObject.connect(menu,
-                               QtCore.SIGNAL("triggered(QAction*)"),
-                               self.__filterLockStateHandle)
+        menu.triggered.connect(self.__filterLockStateHandle)
 
         for item in ["Clear", None] + self.__filterLockStateList:
             if item:
@@ -382,9 +374,7 @@ class HostMonitor(QtWidgets.QWidget):
 
         menu = QtWidgets.QMenu(self)
         btn.setMenu(menu)
-        QtCore.QObject.connect(menu,
-                               QtCore.SIGNAL("triggered(QAction*)"),
-                               self.__filterOSHandle)
+        menu.triggered.connect(self.__filterOSHandle)
 
         for item in ["Clear", None] + self.__filterOSList:
             if item:
@@ -494,9 +484,7 @@ class HostMonitor(QtWidgets.QWidget):
         layout.addWidget(checkBox)
         if self.hostMonitorTree.enableRefresh:
             checkBox.setCheckState(QtCore.Qt.Checked)
-        QtCore.QObject.connect(checkBox,
-                               QtCore.SIGNAL('stateChanged(int)'),
-                               self.__refreshToggleCheckBoxHandle)
+        checkBox.stateChanged.connect(self.__refreshToggleCheckBoxHandle)
         __refreshToggleCheckBoxCheckBox = checkBox
         # pylint: enable=no-member
 

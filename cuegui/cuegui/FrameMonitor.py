@@ -27,11 +27,13 @@ import math
 from qtpy import QtCore
 from qtpy import QtGui
 from qtpy import QtWidgets
+from qtpy.QtCore import Signal  # type: ignore
+from qtpy.QtWidgets import QAction  # type: ignore
 
 import FileSequence
 from opencue_proto import job_pb2
 
-import cuegui.FrameMonitorTree
+import cuegui.FrameMonitorTree  # type: ignore
 import cuegui.FrameRangeSelection
 import cuegui.Logger
 
@@ -42,7 +44,7 @@ log = cuegui.Logger.getLogger(__file__)
 class FrameMonitor(QtWidgets.QWidget):
     """Widget for displaying a list of frames with controls at the top."""
 
-    handle_filter_layers_byLayer = QtCore.Signal(list)
+    handle_filter_layers_byLayer = Signal(list)
 
     def __init__(self, parent):
         QtWidgets.QWidget.__init__(self, parent)
@@ -53,10 +55,8 @@ class FrameMonitor(QtWidgets.QWidget):
         # Setup main vertical layout
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
         self.setLayout(layout)
-
-        self.layout().setContentsMargins(0, 0, 0, 0)
-        self.layout().setSpacing(4)
 
         # This hlayout would contain any filter/control buttons
         hlayout = QtWidgets.QHBoxLayout()
@@ -72,10 +72,10 @@ class FrameMonitor(QtWidgets.QWidget):
         hlayout.addStretch()
         self._displayJobNameSetup(hlayout)
 
-        self.layout().addLayout(hlayout)
-        self.layout().addWidget(self.frameMonitorTree)
+        layout.addLayout(hlayout)
+        layout.addWidget(self.frameMonitorTree)
 
-        self._frameRangeSelectionFilterSetup(self.layout())
+        self._frameRangeSelectionFilterSetup(layout)
 
     def updateRequest(self):
         """Requests an update of the frame list."""
@@ -128,10 +128,11 @@ class FrameMonitor(QtWidgets.QWidget):
         self.frameMonitorTree.job_changed.connect(self._frameRangeSelectionFilterUpdate)
 
     def _frameRangeSelectionFilterUpdate(self):
-        if not self.frameMonitorTree.getJob():
+        job = self.frameMonitorTree.getJob()
+        if not job:
             self.frameRangeSelection.setFrameRange(["1", str(self.frameSearchLimit)])
         else:
-            layers = self.frameMonitorTree.getJob().getLayers()
+            layers = job.getLayers()
 
             _min = None
             _max = None
@@ -151,7 +152,7 @@ class FrameMonitor(QtWidgets.QWidget):
                     _max = int(frameList[-1])
 
             if _min == _max:
-                _max += 1
+                _max = (_max or 0) + 1
 
             self.frameRangeSelection.default_select_size = self.frameSearchLimit // len(layers)
 
@@ -169,7 +170,7 @@ class FrameMonitor(QtWidgets.QWidget):
         @param layout: The layout to add the button to
         @type  layout: QLayout"""
         self.btn_refresh = QtWidgets.QPushButton("Refresh")
-        self.btn_refresh.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.btn_refresh.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
         layout.addWidget(self.btn_refresh)
         self.btn_refresh.clicked.connect(self.frameMonitorTree.updateRequest)  # pylint: disable=no-member
         self.frameMonitorTree.updated.connect(self._refreshButtonDisableHandle)
@@ -191,7 +192,7 @@ class FrameMonitor(QtWidgets.QWidget):
         @param layout: The layout to add the button to
         @type  layout: QLayout"""
         btn = QtWidgets.QPushButton("Clear")
-        btn.setFocusPolicy(QtCore.Qt.NoFocus)
+        btn.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
         btn.setContentsMargins(0,0,0,0)
         layout.addWidget(btn)
         btn.clicked.connect(self._clearButtonHandle)  # pylint: disable=no-member
@@ -214,14 +215,14 @@ class FrameMonitor(QtWidgets.QWidget):
 
         # Previous page button
         self.prev_page_btn = QtWidgets.QPushButton("<")
-        self.prev_page_btn.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.prev_page_btn.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
         self.prev_page_btn.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.prev_page_btn)
         self.prev_page_btn.clicked.connect(lambda: self._pageButtonsHandle(-1))  # pylint: disable=no-member
 
         # Next page button
         self.next_page_btn = QtWidgets.QPushButton(">")
-        self.next_page_btn.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.next_page_btn.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
         self.next_page_btn.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.next_page_btn)
         self.next_page_btn.clicked.connect(lambda: self._pageButtonsHandle(1))  # pylint: disable=no-member
@@ -294,7 +295,7 @@ class FrameMonitor(QtWidgets.QWidget):
         @param layout: The layout to add the menu to
         @type  layout: QLayout"""
         btn = QtWidgets.QPushButton("Select Status")
-        btn.setFocusPolicy(QtCore.Qt.NoFocus)
+        btn.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
         btn.setContentsMargins(0,0,0,0)
         btn.setFlat(True)
 
@@ -328,7 +329,7 @@ class FrameMonitor(QtWidgets.QWidget):
         @param layout: The layout to add the menu to
         @type  layout: QLayout"""
         btn = QtWidgets.QPushButton("Filter Layers")
-        btn.setFocusPolicy(QtCore.Qt.NoFocus)
+        btn.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
         btn.setContentsMargins(0,0,0,0)
         btn.setFlat(True)
 
@@ -351,16 +352,16 @@ class FrameMonitor(QtWidgets.QWidget):
         else:
             menu = QtWidgets.QMenu(self)
             btn.setMenu(menu)
-            menu.triggered[QtWidgets.QAction].connect(self._filterLayersHandle)  # pylint: disable=unsubscriptable-object
+            menu.triggered.connect(self._filterLayersHandle)  # type: ignore
 
         if self.frameMonitorTree.getJob():
-            layers = [x.data.name for x in self.frameMonitorTree.getJob().getLayers()]
+            layers = [x.data.name for x in self.frameMonitorTree.getJob().getLayers()]  # type: ignore
         else:
             layers = []
 
         for item in ["Clear", None ] + sorted(layers):
             if item:
-                a = QtWidgets.QAction(menu)
+                a = QAction(menu)
                 a.setText(item)
                 if item != "Clear":
                     a.setCheckable(True)
@@ -423,7 +424,7 @@ class FrameMonitor(QtWidgets.QWidget):
         @param layout: The layout to add the menu to
         @type  layout: QLayout"""
         btn = QtWidgets.QPushButton("Filter Status")
-        btn.setFocusPolicy(QtCore.Qt.NoFocus)
+        btn.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
         btn.setContentsMargins(0,0,0,0)
         btn.setFlat(True)
 
@@ -431,16 +432,16 @@ class FrameMonitor(QtWidgets.QWidget):
         btn.setMenu(menu)
         menu.triggered.connect(self._filterStatusHandle)  # pylint: disable=no-member
 
-        for item in [("Clear", QtCore.Qt.ALT | QtCore.Qt.Key_QuoteLeft),
+        for item in [("Clear", QtCore.Qt.ALT | QtCore.Qt.Key_QuoteLeft),  # type: ignore
                      None,
-                     ("Succeeded", QtCore.Qt.ALT | QtCore.Qt.Key_1),
-                     ("Running", QtCore.Qt.ALT | QtCore.Qt.Key_2),
-                     ("Waiting", QtCore.Qt.ALT | QtCore.Qt.Key_3),
-                     ("Depend", QtCore.Qt.ALT | QtCore.Qt.Key_4),
-                     ("Dead", QtCore.Qt.ALT | QtCore.Qt.Key_5),
-                     ("Eaten", QtCore.Qt.ALT | QtCore.Qt.Key_6)]:
+                     ("Succeeded", QtCore.Qt.ALT | QtCore.Qt.Key_1),  # type: ignore
+                     ("Running", QtCore.Qt.ALT | QtCore.Qt.Key_2),  # type: ignore
+                     ("Waiting", QtCore.Qt.ALT | QtCore.Qt.Key_3),  # type: ignore
+                     ("Depend", QtCore.Qt.ALT | QtCore.Qt.Key_4),  # type: ignore
+                     ("Dead", QtCore.Qt.ALT | QtCore.Qt.Key_5),  # type: ignore
+                     ("Eaten", QtCore.Qt.ALT | QtCore.Qt.Key_6)]:  # type: ignore
             if item:
-                a = QtWidgets.QAction(item[0], menu)
+                a = QAction(item[0], menu)
                 if item[0] != "Clear":
                     a.setCheckable(True)
                 if item[1]:
@@ -506,6 +507,6 @@ class FrameMonitor(QtWidgets.QWidget):
         """Updates the display job name label with the name of the current job."""
         if self.frameMonitorTree.getJob():
             self._displayJobNameLabel.setText(
-                "   <font color=\"green\">%s</font>   " % self.frameMonitorTree.getJob().data.name)
+                "   <font color=\"green\">%s</font>   " % self.frameMonitorTree.getJob().data.name)  # type: ignore
         else:
             self._displayJobNameLabel.clear()

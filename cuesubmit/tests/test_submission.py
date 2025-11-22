@@ -146,6 +146,7 @@ class SubmissionTests(unittest.TestCase):
         self.assertEqual(
             [
                 'blender', '-b', '-noaudio', BLENDER_SINGLE_LAYER_DATA['cmd']['blenderFile'],
+                '--use-compositing',
                 '-o', BLENDER_SINGLE_LAYER_DATA['cmd']['outputPath'],
                 '-F', BLENDER_SINGLE_LAYER_DATA['cmd']['outputFormat'],
                 '-f', '#IFRAME#'
@@ -170,6 +171,7 @@ class SubmissionTests(unittest.TestCase):
         self.assertEqual(
             [
                 'blender', '-b', '-noaudio', BLENDER_MULTI_LAYER_DATA['cmd']['blenderFile'],
+                '--use-compositing',
                 '-o', BLENDER_MULTI_LAYER_DATA['cmd']['outputPath'],
                 '-F', BLENDER_MULTI_LAYER_DATA['cmd']['outputFormat'],
                 '-s', '#FRAME_START#', '-e', '#FRAME_END#', '-a'

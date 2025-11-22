@@ -38,7 +38,8 @@ class CueSubmitApp(QtWidgets.QApplication):
     def __init__(self, args):
         super(CueSubmitApp, self).__init__(args)
         self.mainWindow = CueSubmitMainWindow(Constants.SUBMIT_APP_WINDOW_TITLE)
-        self.icon = QtGui.QPixmap('{}/images/OpenCue.png'.format(Constants.DIR_PATH))
+        # Use QIcon instead of QPixmap for window icon to satisfy Qt API
+        self.icon = QtGui.QIcon('{}/images/OpenCue.png'.format(Constants.DIR_PATH))
         self.setWindowIcon(self.icon)
 
     def startup(self):

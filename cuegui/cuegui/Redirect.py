@@ -29,6 +29,7 @@ from builtins import str
 from builtins import range
 import os
 import re
+import sys
 import time
 
 from qtpy import QtCore
@@ -452,7 +453,10 @@ class RedirectWidget(QtWidgets.QWidget):
         the middle click selection clip board.
         """
         try:
-            QtWidgets.QApplication.clipboard().setText(item.data(), QtGui.QClipboard.Selection)
+            mode = QtGui.QClipboard.Selection
+            if sys.platform.startswith('win'):
+                mode = QtGui.QClipboard.Clipboard
+            QtWidgets.QApplication.clipboard().setText(item.data(), mode)
         except AttributeError as e:
             logger.info("Error item no longer available %s", e)
 

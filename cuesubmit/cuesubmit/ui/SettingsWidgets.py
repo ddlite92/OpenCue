@@ -226,6 +226,25 @@ class BaseBlenderSettings(BaseSettingsWidget):
         super(BaseBlenderSettings, self).__init__(parent=parent)
         self.groupBox.setTitle('Blender options')
         self.fileFilters = Constants.BLENDER_FILE_FILTERS
+        
+        # Blender version selector
+        import os
+        import glob
+        blender_versions = []
+        blender_base = 'C:\\blender'
+        if os.path.exists(blender_base):
+            version_dirs = glob.glob(os.path.join(blender_base, '*'))
+            blender_versions = [os.path.basename(d) for d in version_dirs if os.path.isdir(d)]
+            blender_versions.sort(reverse=True)  # Latest first
+        
+        if not blender_versions:
+            blender_versions = ['[No Blender installations found]']
+        
+        self.versionSelector = Widgets.CueSelectPulldown(
+            'Blender Version', options=blender_versions, multiselect=False)
+        if blender_versions and blender_versions[0] != '[No Blender installations found]':
+            self.versionSelector.setChecked(blender_versions[0])  # Select latest by default
+        
         self.fileInput = Widgets.CueLabelLineEdit('Blender File:')
         self.outputPath = Widgets.CueLabelLineEdit(
             'Output Path (Optional):',
@@ -235,35 +254,56 @@ class BaseBlenderSettings(BaseSettingsWidget):
         self.outputSelector = Widgets.CueSelectPulldown(
             'Output Format', options=Constants.BLENDER_FORMATS, multiselect=False)
         self.outputLayout = QtWidgets.QHBoxLayout()
+        self.useCompositing = QtWidgets.QCheckBox('Use Compositing Nodes')
+        self.useCompositing.setToolTip('Enable compositor for rendering (adds --use-compositing flag)')
+        self.useCompositing.setChecked(True)  # Default to enabled for compositing workflows
         self.setupUi()
         self.setupConnections()
 
     def setupUi(self):
         """Creates the Blender-specific widget layout."""
+        self.groupLayout.addWidget(self.versionSelector)
         self.groupLayout.addWidget(self.fileInput)
         self.groupLayout.addLayout(self.outputLayout)
         self.outputLayout.addWidget(self.outputPath)
         self.outputLayout.addWidget(self.outputSelector)
+        self.groupLayout.addWidget(self.useCompositing)
 
     def setupConnections(self):
         """Sets up widget signals."""
         # pylint: disable=no-member
+        self.versionSelector.optionsMenu.triggered.connect(self.dataChanged.emit)
         self.fileInput.lineEdit.textChanged.connect(self.dataChanged.emit)
         self.outputPath.lineEdit.textChanged.connect(self.dataChanged.emit)
         self.outputSelector.optionsMenu.triggered.connect(self.dataChanged.emit)
+        self.useCompositing.stateChanged.connect(self.dataChanged.emit)
         self.fileInput.setFileBrowsable(fileFilter=self.fileFilters)
         # pylint: enable=no-member
 
     def setCommandData(self, commandData):
-        self.fileInput.setText(commandData.get('nukeFile', ''))
+        self.versionSelector.setChecked(commandData.get('blenderVersion', ''))
+        self.fileInput.setText(commandData.get('blenderFile', ''))
         self.outputPath.setText(commandData.get('outputPath', ''))
         self.outputSelector.setChecked(commandData.get('outputFormat', ''))
+        self.useCompositing.setChecked(commandData.get('useCompositing', True))
 
     def getCommandData(self):
+        import os
+        version = self.versionSelector.text()
+        blender_exe = 'blender'  # Default fallback
+        
+        if version and version != '[No Blender installations found]':
+            blender_path = os.path.join('C:\\blender', version, 'blender.exe')
+            if os.path.exists(blender_path):
+                blender_exe = blender_path
+        
         return {
+            'blenderVersion': version,
+            'blenderExecutable': blender_exe,
             'blenderFile': self.fileInput.text(),
             'outputPath': self.outputPath.text(),
-            'outputFormat': self.outputSelector.text()
+            'outputFormat': self.outputSelector.text(),
+            'useCompositing': self.useCompositing.isChecked()
         }
 
 class DynamicSettingsWidget(BaseSettingsWidget):

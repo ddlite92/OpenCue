@@ -380,11 +380,13 @@ class CueSubmitWidget(QtWidgets.QWidget):
         """
         if self.skipDataChangedEvent:
             return
+        # Clean frame range by removing spaces (e.g., "260- 880" -> "260-880")
+        frameRange = self.frameBox.frameSpecInput.text().replace(' ', '')
         self.jobTreeWidget.updateLayerData(
             name=self.layerNameInput.text(),
             layerType=self.jobTypeSelector.text(),
             cmd=self.settingsWidget.getCommandData(),
-            layerRange=self.frameBox.frameSpecInput.text(),
+            layerRange=frameRange,
             chunk=self.chunkInput.text(),
             overrideCores=self.coresInput.toggleValue,
             cores=self.coresInput.text(),
@@ -401,6 +403,10 @@ class CueSubmitWidget(QtWidgets.QWidget):
         """ Builds the final command for this layer and displays it in the feedback widget """
         command = Submission.buildLayerCommand(layerData=layerData,
                                                silent=True)
+        # Convert list to string for display
+        if isinstance(command, list):
+            import shlex
+            command = ' '.join(shlex.quote(arg) for arg in command)
         self.commandFeedback.setText(text=command)
 
     def jobTypeChanged(self):
@@ -580,15 +586,45 @@ class CueSubmitWidget(QtWidgets.QWidget):
         jobData = self.getJobData()
         if not self.validate(jobData):
             return
+
+        # Pre-flight duplicate name check: avoid server-side crash when job already pending.
+        duplicate_pending = False
+        try:
+            # Retrieve jobs with same name that are not finished
+            existing = opencue.api.getJobs(name=[jobData['name']], include_finished=False)
+            if existing:
+                duplicate_pending = True
+        except opencue.exception.CueException:
+            # If lookup fails, proceed; we'll rely on server error handling.
+            pass
+
+        if duplicate_pending:
+            Widgets.CueMessageBox(
+                f"A job named '{jobData['name']}' is already pending.\n"
+                "Rename the job or wait until the previous one finishes.",
+                title="Duplicate Pending Job",
+                parent=self
+            ).show()
+            return
+
         self.clearMessageShown = False
         self.saveSettings(jobData)
         self.updateCompleters()
         try:
             jobs = Submission.submitJob(jobData)
         except opencue.exception.CueException as e:
+            lower_msg = str(e).lower()
+            if "already pending" in lower_msg:
+                Widgets.CueMessageBox(
+                    f"Submission aborted: a job named '{jobData['name']}' is already pending.\n"
+                    "Choose a different name or wait for completion.",
+                    title="Duplicate Pending Job",
+                    parent=self
+                ).show()
+                return
             message = "Failed to submit job!\n" + str(e)
             Widgets.CueMessageBox(message, title="Failed Job Submission", parent=self).show()
-            raise e
+            return
 
         message = "Submitted Job to OpenCue."
         for job in jobs:
