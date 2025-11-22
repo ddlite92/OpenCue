@@ -42,6 +42,7 @@ class DependMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     """Tree for displaying a list of depends."""
 
     def __init__(self, parent, rpcObject):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
         self.startColumnsForType(cuegui.Constants.TYPE_DEPEND)
         self.addColumn("Type", 130, id=1,
                        data=lambda depend: depend_pb2.DependType.Name(depend.type()))
@@ -55,10 +56,9 @@ class DependMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
                        data=lambda depend: (depend.dependOnLayer()))
         self.addColumn("OnFrame", 100, id=9,
                        data=lambda depend: (depend.dependOnFrame()))
+        self._finalizeColumns()
 
         self.rpcObject = rpcObject
-
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
 
         # Set columns to auto-resize to content
         header = self.header()

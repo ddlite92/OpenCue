@@ -69,9 +69,10 @@ class JobTypes(object):
     @classmethod
     def services(cls, jobType):
         """return a list of services for a given jobType. (the "services" key in your yaml file)"""
-        return Constants.RENDER_CMDS[jobType].get('services', [])
+        # Use .get to avoid KeyError when jobType has no entry in RENDER_CMDS (e.g. built-ins like Blender)
+        return Constants.RENDER_CMDS.get(jobType, {}).get('services', [])
 
     @classmethod
     def limits(cls, jobType):
         """return a list of limits for a given jobType. (the "limits" key in your yaml file)"""
-        return Constants.RENDER_CMDS[jobType].get('limits', [])
+        return Constants.RENDER_CMDS.get(jobType, {}).get('limits', [])

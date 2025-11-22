@@ -196,6 +196,9 @@ class LogTextEdit(QtWidgets.QPlainTextEdit):
         @type mode: int
         """
         selection = self.textCursor().selection()
+        # Fallback for platforms without selection clipboard (e.g., Windows)
+        if mode == QtGui.QClipboard.Selection and sys.platform.startswith('win'):
+            mode = QtGui.QClipboard.Clipboard
         QtWidgets.QApplication.clipboard().setText('', mode)
         QtWidgets.QApplication.clipboard().setText(selection.toPlainText(), mode)
 
@@ -325,7 +328,7 @@ class LogTextEdit(QtWidgets.QPlainTextEdit):
 class LogLoadSignals(QtCore.QObject):
     """Signals for the LoadLog action"""
     SIG_LOG_LOAD_ERROR = QtCore.Signal(tuple)
-    SIG_LOG_LOAD_RESULT = QtCore.Signal(str, str)
+    SIG_LOG_LOAD_RESULT = QtCore.Signal(str, float)
     SIG_LOG_LOAD_FINISHED = QtCore.Signal()
 
 class LogLoader(QtCore.QRunnable):
@@ -356,7 +359,7 @@ class LogViewWidget(QtWidgets.QWidget):
     """
     Displays the log file for the selected frame
     """
-    SIG_CONTENT_UPDATED = QtCore.Signal(str, str)
+    SIG_CONTENT_UPDATED = QtCore.Signal(str, float)
     def __init__(self, parent=None):
         """
         Create the UI elements
@@ -895,11 +898,11 @@ class LogViewWidget(QtWidgets.QWidget):
 
         return content, curr_log_mtime
 
-    @QtCore.Slot()
+    @QtCore.Slot(str, float)
     def _receive_log_results(self, content, log_mtime):
         self.SIG_CONTENT_UPDATED.emit(content, log_mtime)
 
-    @QtCore.Slot(str, str)
+    @QtCore.Slot(str, float)
     def _update_log_content(self, content, log_mtime):
         """
         Updates the content of the content box with the content of the log

@@ -170,6 +170,8 @@ class SubscriptionsTreeWidget(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     """Tree widget for displaying a list of subscriptions."""
 
     def __init__(self, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+
         self.startColumnsForType(cuegui.Constants.TYPE_SUB)
         self.addColumn("Alloc", 160, id=1,
                        data=lambda sub: sub.data.allocation_name)
@@ -190,7 +192,7 @@ class SubscriptionsTreeWidget(cuegui.AbstractTreeWidget.AbstractTreeWidget):
                        data=lambda sub: ("%.2f" % (sub.data.reserved_cores/100.0)),
                        sort=lambda sub: (sub.data.reserved_cores/100.0))
 
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+        self._finalizeColumns()
 
         self.__show = None
 

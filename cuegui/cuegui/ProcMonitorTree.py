@@ -43,6 +43,8 @@ class ProcMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     """Tree widget for displaying a list of procs."""
 
     def __init__(self, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+
         self.startColumnsForType(cuegui.Constants.TYPE_PROC)
         self.addColumn(
             "Name", 150, id=1, data=lambda proc: proc.data.name, tip="Name of the running proc.")
@@ -76,9 +78,9 @@ class ProcMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
             "Job", 50, id=9, data=lambda proc: proc.data.job_name,
             tip="The job that this proc is running on.")
 
-        self.procSearch = opencue.search.ProcSearch()
+        self._finalizeColumns()
 
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+        self.procSearch = opencue.search.ProcSearch()
 
         # Used to build right click context menus
         self.__menuActions = cuegui.MenuActions.MenuActions(

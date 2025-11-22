@@ -51,6 +51,7 @@ class HostMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     """Tree widget for displaying a list of hosts."""
 
     def __init__(self, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
 
         self.startColumnsForType(cuegui.Constants.TYPE_HOST)
         self.addColumn("Name", 150, id=1,
@@ -160,9 +161,9 @@ class HostMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
                        tip="The tags applied to the host.\n\n"
                            "On a frame it is the name of the job.")
 
-        self.hostSearch = opencue.search.HostSearch()
+        self._finalizeColumns()
 
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+        self.hostSearch = opencue.search.HostSearch()
 
         # Used to build right click context menus
         self.__menuActions = cuegui.MenuActions.MenuActions(

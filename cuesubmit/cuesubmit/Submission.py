@@ -22,6 +22,7 @@ from __future__ import absolute_import
 
 from builtins import str
 import re
+import shlex
 
 import outline
 import outline.cuerun
@@ -75,59 +76,66 @@ def buildDynamicCmd(layerData):
 
 
 def buildMayaCmd(layerData, silent=False):
-    """From a layer, builds a Maya Render command."""
+    """From a layer, builds a Maya Render command as a list.
+    
+    Returns a list to properly preserve paths with spaces and special characters.
+    """
     camera = layerData.cmd.get('camera')
     mayaFile = layerData.cmd.get('mayaFile')
     if not mayaFile and not silent:
         raise ValueError('No Maya File provided. Cannot submit job.')
-    renderCommand = '{renderCmd} -r file -s {frameStart} -e {frameEnd}'.format(
-        renderCmd=Constants.MAYA_RENDER_CMD,
-        frameStart=Constants.FRAME_START_TOKEN,
-        frameEnd=Constants.FRAME_END_TOKEN)
+    
+    args = [Constants.MAYA_RENDER_CMD, '-r', 'file', '-s', Constants.FRAME_START_TOKEN,
+            '-e', Constants.FRAME_END_TOKEN]
     if camera:
-        renderCommand += ' -cam {}'.format(camera)
-    renderCommand += ' {}'.format(mayaFile)
-    return renderCommand
+        args.extend(['-cam', camera])
+    args.append(mayaFile)
+    return args
 
 
 def buildNukeCmd(layerData, silent=False):
-    """From a layer, builds a Nuke Render command."""
+    """From a layer, builds a Nuke Render command as a list.
+    
+    Returns a list to properly preserve paths with spaces and special characters.
+    """
     writeNodes = layerData.cmd.get('writeNodes')
     nukeFile = layerData.cmd.get('nukeFile')
     if not nukeFile and not silent:
         raise ValueError('No Nuke file provided. Cannot submit job.')
-    renderCommand = '{renderCmd} -F {frameToken} '.format(
-        renderCmd=Constants.NUKE_RENDER_CMD, frameToken=Constants.FRAME_TOKEN)
+    
+    args = [Constants.NUKE_RENDER_CMD, '-F', Constants.FRAME_TOKEN]
     if writeNodes:
-        renderCommand += '-X {} '.format(writeNodes)
-    renderCommand += '-x {}'.format(nukeFile)
-    return renderCommand
+        args.extend(['-X', writeNodes])
+    args.extend(['-x', nukeFile])
+    return args
 
 
 def buildBlenderCmd(layerData, silent=False):
-    """From a layer, builds a Blender render command."""
+    """From a layer, builds a Blender render command as a list.
+
+    Returns a list to properly preserve paths with spaces and special characters.
+    """
     blenderFile = layerData.cmd.get('blenderFile')
+    blenderExecutable = layerData.cmd.get('blenderExecutable', Constants.BLENDER_RENDER_CMD)
     outputPath = layerData.cmd.get('outputPath')
     outputFormat = layerData.cmd.get('outputFormat')
+    useCompositing = layerData.cmd.get('useCompositing', True)
     frameRange = layerData.layerRange
     if not blenderFile and not silent:
         raise ValueError('No Blender file provided. Cannot submit job.')
 
-    renderCommand = '{renderCmd} -b -noaudio {blenderFile}'.format(
-        renderCmd=Constants.BLENDER_RENDER_CMD, blenderFile=blenderFile)
+    args = [blenderExecutable, '-b', '-noaudio', blenderFile]
+    if useCompositing:
+        args.append('--use-compositing')
     if outputPath:
-        renderCommand += ' -o {}'.format(outputPath)
+        args.extend(['-o', outputPath])
     if outputFormat:
-        renderCommand += ' -F {}'.format(outputFormat)
+        args.extend(['-F', outputFormat])
     if re.match(r"^\d+-\d+$", frameRange):
-        # Render frames from start to end (inclusive) via '-a' command argument
-        renderCommand += (' -s {startFrame} -e {endFrame} -a'
-                          .format(startFrame=Constants.FRAME_START_TOKEN,
-                                  endFrame=Constants.FRAME_END_TOKEN))
+        args.extend(['-s', Constants.FRAME_START_TOKEN, '-e', Constants.FRAME_END_TOKEN, '-a'])
     else:
-        # The render frame must come after the scene and output
-        renderCommand += ' -f {frameToken}'.format(frameToken=Constants.FRAME_TOKEN)
-    return renderCommand
+        args.extend(['-f', Constants.FRAME_TOKEN])
+    return args
 
 
 def buildLayer(layerData, command, lastLayer=None):
@@ -135,8 +143,8 @@ def buildLayer(layerData, command, lastLayer=None):
 
     @type layerData: ui.Layer.LayerData
     @param layerData: layer data from the ui
-    @type command: str
-    @param command: command to run
+    @type command: str or list
+    @param command: command to run (string or list of arguments)
     @type lastLayer: outline.layer.Layer
     @param lastLayer: layer that this new layer should be dependent on if dependType is set.
     """
@@ -147,8 +155,9 @@ def buildLayer(layerData, command, lastLayer=None):
         threadable = Util.getServiceOption(layerData.services[0], 'threadable')
 
     cores = layerData.cores if layerData.overrideCores else None
+    command_tokens = command if isinstance(command, list) else shlex.split(command)
     layer = outline.modules.shell.Shell(
-        layerData.name, command=command.split(), chunk=layerData.chunk,
+        layerData.name, command=command_tokens, chunk=layerData.chunk,
         cores=cores,
         range=str(layerData.layerRange), threadable=threadable)
     if layerData.services:
@@ -164,23 +173,23 @@ def buildLayer(layerData, command, lastLayer=None):
 
 
 def buildLayerCommand(layerData, silent=False):
-    """Builds the command to be sent per jobType"""
+    """Builds the command to be sent per jobType (str or list)."""
     if layerData.layerType in JobTypes.JobTypes.FROM_CONFIG_FILE:
-        command = buildDynamicCmd(layerData)
-    elif layerData.layerType == JobTypes.JobTypes.MAYA:
-        command = buildMayaCmd(layerData, silent)
-    elif layerData.layerType == JobTypes.JobTypes.SHELL:
-        command = layerData.cmd.get('commandTextBox') if silent else layerData.cmd['commandTextBox']
-    elif layerData.layerType == JobTypes.JobTypes.NUKE:
-        command = buildNukeCmd(layerData, silent)
-    elif layerData.layerType == JobTypes.JobTypes.BLENDER:
-        command = buildBlenderCmd(layerData, silent)
-    else:
-        if silent:
-            command = 'Error: unrecognized layer type {}'.format(layerData.layerType)
-        else:
-            raise ValueError('unrecognized layer type {}'.format(layerData.layerType))
-    return command
+        return buildDynamicCmd(layerData)
+    if layerData.layerType == JobTypes.JobTypes.MAYA:
+        return buildMayaCmd(layerData, silent)
+    if layerData.layerType == JobTypes.JobTypes.SHELL:
+        # Shell commands are user-provided strings that may already have quotes
+        # Return as list for consistent handling
+        shell_cmd = layerData.cmd.get('commandTextBox') if silent else layerData.cmd['commandTextBox']
+        return shlex.split(shell_cmd) if shell_cmd else []
+    if layerData.layerType == JobTypes.JobTypes.NUKE:
+        return buildNukeCmd(layerData, silent)
+    if layerData.layerType == JobTypes.JobTypes.BLENDER:
+        return buildBlenderCmd(layerData, silent)
+    if silent:
+        return 'Error: unrecognized layer type {}'.format(layerData.layerType)
+    raise ValueError('unrecognized layer type {}'.format(layerData.layerType))
 
 
 def submitJob(jobData):

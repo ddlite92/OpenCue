@@ -28,6 +28,7 @@ import functools
 import glob
 import os
 import re
+import sys
 import time
 
 from qtpy import QtCore
@@ -71,6 +72,8 @@ class FrameMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     handle_filter_layers_byLayer = QtCore.Signal(list)
 
     def __init__(self, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+
         self.frameLogDataBuffer = FrameLogDataBuffer()
         self.frameEtaDataBuffer = FrameEtaDataBuffer()
 
@@ -212,12 +215,12 @@ class FrameMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
                                                     job, frame)[FrameLogDataBuffer.LASTLINE] or ""),
                        tip="The last line of a running frame's log file.")
 
+        self._finalizeColumns()
+
         self.frameSearch = opencue.search.FrameSearch()
 
         self.__job = None
         self.__jobState = None
-
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
 
         # Used to build right click context menus
         # pylint: disable=unused-private-member
@@ -343,8 +346,10 @@ class FrameMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
         selected = [
             frame.data.name for frame in self.selectedObjects() if cuegui.Utils.isFrame(frame)]
         if selected:
-            QtWidgets.QApplication.clipboard().setText(" ".join(selected),
-                                                       QtGui.QClipboard.Selection)
+            mode = QtGui.QClipboard.Selection
+            if sys.platform.startswith('win'):
+                mode = QtGui.QClipboard.Clipboard
+            QtWidgets.QApplication.clipboard().setText(" ".join(selected), mode)
 
     def __itemSingleClickedViewLog(self, item, col):
         """Called when an item is clicked on. Views the log file contents
@@ -991,6 +996,8 @@ class FrameContextMenu(QtWidgets.QMenu):
         self.__menuActions.frames().addAction(self, "previewAovs")
         self.addSeparator()
         self.__menuActions.frames().addAction(self, "retry").setEnabled(not readonly)
+        self.__menuActions.frames().addAction(self, "retryIndividualFrames").setEnabled(not readonly)
+        self.__menuActions.frames().addAction(self, "forceRerender")  # Always enabled
         self.__menuActions.frames().addAction(self, "eat").setEnabled(not readonly)
         self.__menuActions.frames().addAction(self, "kill").setEnabled(not readonly)
         self.__menuActions.frames().addAction(self, "eatandmarkdone").setEnabled(not readonly)

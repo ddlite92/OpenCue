@@ -236,10 +236,13 @@ class FrameRangeSelectionWidget(QtWidgets.QWidget):
         """Get a QRect with a tick area"""
         tickArea = self.__getTickAreaExtent()
         tickSpacing = (
-                float(self.__getTickAreaExtent().width()) /
-                max(1, (self.__frameRange[1] - self.__frameRange[0])))
-        return QtCore.QRect(tickArea.left() + tickSpacing * (time - self.__frameRange[0]),
-                        tickArea.top(), tickSpacing, tickArea.height())
+            float(tickArea.width()) /
+            max(1, (self.__frameRange[1] - self.__frameRange[0]))
+        )
+        # Convert floating positions to ints for QRect constructor
+        left = int(round(tickArea.left() + tickSpacing * (time - self.__frameRange[0])))
+        width = max(1, int(round(tickSpacing)))
+        return QtCore.QRect(left, tickArea.top(), width, tickArea.height())
 
     def __getTimeFromLocalPoint(self, x):
         """Get time from a local point"""
@@ -289,7 +292,8 @@ class FrameRangeSelectionWidget(QtWidgets.QWidget):
         if tickArea.width() >= 5:
             for frame in range(self.__frameRange[0], self.__frameRange[1] + 1, 1):
                 xPos = self.__getTickArea(frame).left()
-                painter.drawLine(xPos, -tickHeight, xPos, 0)
+                xPos_i = int(round(xPos))
+                painter.drawLine(xPos_i, -tickHeight, xPos_i, 0)
 
     def __paintLabels(self, painter):
         tickExtent = self.__getTickAreaExtent()
@@ -315,7 +319,8 @@ class FrameRangeSelectionWidget(QtWidgets.QWidget):
         painter.setPen(self.palette().color(QtGui.QPalette.WindowText))
         for frame in frames:
             xPos = self.__getTickArea(frame).left()
-            painter.drawLine(xPos, -labelHeight, xPos, 0)
+            xPos_i = int(round(xPos))
+            painter.drawLine(xPos_i, -labelHeight, xPos_i, 0)
 
         painter.setPen(QtGui.QColor(10, 10, 10))
 
@@ -342,7 +347,7 @@ class FrameRangeSelectionWidget(QtWidgets.QWidget):
         timeExtent = self.__getTickArea(startFrame)
         oldPen = painter.pen()
         painter.setPen(QtGui.QColor(0, 255, 0))
-        painter.drawLine(timeExtent.left(), timeExtent.top(), timeExtent.left(), 0)
+        painter.drawLine(int(timeExtent.left()), int(timeExtent.top()), int(timeExtent.left()), 0)
 
         metric = QtGui.QFontMetrics(painter.font())
         frameString = str(int(startFrame))
@@ -356,7 +361,7 @@ class FrameRangeSelectionWidget(QtWidgets.QWidget):
         timeExtent = self.__getTickArea(endFrame)
         oldPen = painter.pen()
         painter.setPen(QtGui.QColor(255, 0, 0))
-        painter.drawLine(timeExtent.left(), timeExtent.top(), timeExtent.left(), 0)
+        painter.drawLine(int(timeExtent.left()), int(timeExtent.top()), int(timeExtent.left()), 0)
 
         metric = QtGui.QFontMetrics(painter.font())
         frameString = str(int(endFrame))
@@ -373,7 +378,7 @@ class FrameRangeSelectionWidget(QtWidgets.QWidget):
         oldPen = painter.pen()
         painter.setPen(QtGui.QColor(90, 90, 90))
         painter.drawLine(
-            timeExtent.left(), timeExtent.top(), timeExtent.left(), timeExtent.bottom())
+            int(timeExtent.left()), int(timeExtent.top()), int(timeExtent.left()), int(timeExtent.bottom()))
 
         if self.__selectionRange:
             painter.setPen(QtGui.QColor(255,255,255))

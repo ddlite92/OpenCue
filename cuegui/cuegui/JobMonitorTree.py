@@ -23,6 +23,7 @@ from __future__ import division
 from future.utils import iteritems
 from builtins import map
 import functools
+import sys
 import time
 import pickle
 
@@ -94,6 +95,8 @@ class JobMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     view_object = QtCore.Signal(object)
 
     def __init__(self, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+
         self.ticksWithoutUpdate = 0
 
         self.startColumnsForType(cuegui.Constants.TYPE_JOB)
@@ -175,7 +178,7 @@ class JobMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
                            "Purple \t is waiting on a dependency\n"
                            "Light Blue \t is waiting to be booked")
 
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+        self._finalizeColumns()
 
         self.__jobTimeLoaded = {}
         self.__userColors = {}
@@ -239,8 +242,11 @@ class JobMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
         del col
         selected = [job.data.name for job in self.selectedObjects() if cuegui.Utils.isJob(job)]
         if selected:
+            mode = QtGui.QClipboard.Selection
+            if sys.platform.startswith('win'):
+                mode = QtGui.QClipboard.Clipboard
             QtWidgets.QApplication.clipboard().setText(
-                " ".join(selected), QtGui.QClipboard.Selection)
+                " ".join(selected), mode)
 
     def __itemSingleClickedComment(self, item, col):
         """If the comment column is clicked on, and there is a comment on the

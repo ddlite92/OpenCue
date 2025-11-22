@@ -52,6 +52,7 @@ class LayerMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     handle_filter_layers_byLayer = QtCore.Signal(list)
 
     def __init__(self, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
         self.startColumnsForType(cuegui.Constants.TYPE_LAYER)
         self.addColumn("dispatchOrder", 0, id=1,
                        data=lambda layer: layer.data.dispatch_order,
@@ -150,7 +151,7 @@ class LayerMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
                        data=lambda layer: cuegui.Utils.secondsToHHHMM(layer.data.timeout_llu*60),
                        sort=lambda layer: layer.data.timeout_llu,
                        tip="Timeout for a frames\' LLU, Hours:Minutes")
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+        self._finalizeColumns()
 
         # pylint: disable=no-member
         self.itemDoubleClicked.connect(self.__itemDoubleClickedFilterLayer)

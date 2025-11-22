@@ -204,13 +204,13 @@ class JobBookingBarDelegate(AbstractDelegate):
                             RGB_FRAME_STATE[opencue.api.job_pb2.RUNNING])
 
                     painter.setPen(cuegui.Style.ColorTheme.PAUSE_ICON_COLOUR)
-                    x = min(rect.x() + ratio * jobMin, option.rect.right() - 9)
-                    painter.drawLine(x, option.rect.y(), x,
+                    x_pause = int(round(min(rect.x() + ratio * jobMin, option.rect.right() - 9)))
+                    painter.drawLine(x_pause, option.rect.y(), x_pause,
                                      option.rect.y() + option.rect.height())
 
                     painter.setPen(cuegui.Style.ColorTheme.KILL_ICON_COLOUR)
-                    x = min(rect.x() + ratio * jobMax, option.rect.right() - 6)
-                    painter.drawLine(x, option.rect.y(), x,
+                    x_kill = int(round(min(rect.x() + ratio * jobMax, option.rect.right() - 6)))
+                    painter.drawLine(x_kill, option.rect.y(), x_kill,
                                      option.rect.y() + option.rect.height())
 
                 except ZeroDivisionError:
@@ -258,14 +258,14 @@ class SubBookingBarDelegate(AbstractDelegate):
                         RGB_FRAME_STATE[opencue.api.job_pb2.RUNNING])
 
                 painter.setPen(cuegui.Style.ColorTheme.PAUSE_ICON_COLOUR)
-                x = min(rect.x() + ratio * subMin, option.rect.right() - 9)
-                painter.drawLine(x, option.rect.y(), x,
-                                    option.rect.y() + option.rect.height())
+                x_pause = int(round(min(rect.x() + ratio * subMin, option.rect.right() - 9)))
+                painter.drawLine(x_pause, option.rect.y(), x_pause,
+                                 option.rect.y() + option.rect.height())
 
                 painter.setPen(cuegui.Style.ColorTheme.KILL_ICON_COLOUR)
-                x = min(rect.x() + ratio * subMax, option.rect.right() - 6)
-                painter.drawLine(x, option.rect.y(), x,
-                                    option.rect.y() + option.rect.height())
+                x_kill = int(round(min(rect.x() + ratio * subMax, option.rect.right() - 6)))
+                painter.drawLine(x_kill, option.rect.y(), x_kill,
+                                 option.rect.y() + option.rect.height())
 
             except ZeroDivisionError:
                 pass

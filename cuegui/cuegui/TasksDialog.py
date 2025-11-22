@@ -161,6 +161,7 @@ class TaskMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     """Tree widget for displaying a list of tasks."""
 
     def __init__(self, department, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
         self.startColumnsForType(cuegui.Constants.TYPE_TASK)
         self.addColumn("Shot", 100, id=1,
                        data=lambda task:(task.data.shot))
@@ -170,8 +171,7 @@ class TaskMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
                        data=lambda task:(task.data.minCores))
         self.addColumn("Adjust Cores", 100, id=4,
                        data=lambda task:(task.data.adjustCores))
-
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+        self._finalizeColumns()
 
         self.setSortingEnabled(False)
 

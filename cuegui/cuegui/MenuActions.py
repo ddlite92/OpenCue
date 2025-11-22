@@ -28,6 +28,7 @@ from builtins import object
 import getpass
 import glob
 import subprocess
+import sys
 import time
 
 from qtpy import QtGui
@@ -1310,6 +1311,180 @@ class FrameActions(AbstractActions):
                         self._caller, "Confirm", "Retry selected frames?", names):
                     job.retryFrames(name=names)
                     self._update()
+
+    retryIndividualFrames_info = ["Retry Individual Frames...", "Retry specific frame numbers within chunks", "retry"]
+
+    def retryIndividualFrames(self, rpcObjects=None):
+        """Submit a repair job for specific frame numbers within the selected chunks."""
+        import subprocess
+        import os
+        
+        frames = self._getOnlyFrameObjects(rpcObjects)
+        if not frames:
+            return
+            
+        job = self._getSource()
+        
+        # check permissions
+        if not cuegui.Utils.isPermissible(job):
+            cuegui.Utils.showErrorMessageBox(
+                AbstractActions.USER_INTERACTION_PERMISSIONS.format(
+                    "retry individual frames",
+                    job.username())
+            )
+            return
+        
+        # Get frame numbers from the selected chunks
+        chunk_info = []
+        for frame in frames:
+            frame_name = frame.data.name
+            if '-' in frame_name:
+                chunk_info.append(frame_name)
+            else:
+                chunk_info.append(frame_name)
+        
+        # Prompt user for specific frame numbers
+        title = "Retry Individual Frames"
+        body = (f"Selected chunks: {', '.join(chunk_info)}\n\n"
+                f"Enter specific frame numbers to retry\n"
+                f"(e.g., '262,265,268-270'):")
+        
+        (frame_range, choice) = self.getText(title, body, "")
+        
+        if not choice or not frame_range.strip():
+            return
+        
+        # Submit repair job
+        try:
+            job_name = job.data.name
+            show_name = job.data.show
+            shot_name = job.data.shot
+            
+            # Find repair script
+            cuegui_dir = os.path.dirname(os.path.dirname(__file__))
+            opencue_root = os.path.dirname(cuegui_dir)
+            repair_script = os.path.join(opencue_root, "sandbox", "repair_blender_job.py")
+            
+            if not os.path.exists(repair_script):
+                QtWidgets.QMessageBox.warning(
+                    self._caller, "Repair Script Not Found",
+                    f"Could not find repair script at:\n{repair_script}\n\n"
+                    f"Please ensure repair_blender_job.py exists in the sandbox directory.",
+                    QtWidgets.QMessageBox.Ok)
+                return
+            
+            confirm_msg = (f"Submit repair job for frames: {frame_range}\n\n"
+                          f"Original job: {job_name}\nShow: {show_name}\nShot: {shot_name}\n\n"
+                          f"This will create a new repair job.")
+            
+            if not cuegui.Utils.questionBoxYesNo(self._caller, "Confirm Repair Job", confirm_msg):
+                return
+            
+            cmd = [sys.executable, repair_script, "--frames", frame_range,
+                   "--original-job", job_name, "--show", show_name,
+                   "--shot", shot_name, "--chunk", "1"]
+            
+            subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                           creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+            
+            QtWidgets.QMessageBox.information(
+                self._caller, "Repair Job Submitted",
+                f"Repair job submitted for frames: {frame_range}\n\n"
+                f"Job name: {job_name}_repair\nCheck CueGUI for the new job.",
+                QtWidgets.QMessageBox.Ok)
+            
+        except Exception as e:
+            logger.exception("Failed to submit repair job")
+            QtWidgets.QMessageBox.critical(
+                self._caller, "Repair Job Failed",
+                f"Failed to submit repair job:\n{str(e)}",
+                QtWidgets.QMessageBox.Ok)
+
+    forceRerender_info = ["Force Re-render...", "Re-render frames regardless of status (including succeeded)", "retry"]
+
+    def forceRerender(self, rpcObjects=None):
+        """Force re-render frames by submitting a repair job, works on any frame status."""
+        import subprocess
+        import os
+        
+        frames = self._getOnlyFrameObjects(rpcObjects)
+        if not frames:
+            return
+            
+        job = self._getSource()
+        
+        # check permissions
+        if not cuegui.Utils.isPermissible(job):
+            cuegui.Utils.showErrorMessageBox(
+                AbstractActions.USER_INTERACTION_PERMISSIONS.format(
+                    "force re-render frames",
+                    job.username())
+            )
+            return
+        
+        # Get frame numbers from selection
+        chunk_info = []
+        for frame in frames:
+            frame_name = frame.data.name
+            chunk_info.append(frame_name)
+        
+        # Prompt user for specific frame numbers
+        title = "Force Re-render Frames"
+        body = (f"Selected frames: {', '.join(chunk_info)}\n\n"
+                f"Enter frame numbers to re-render\n"
+                f"(e.g., '260,265,270' or leave empty to use selected):")
+        
+        (frame_range, choice) = self.getText(title, body, ', '.join(chunk_info))
+        
+        if not choice or not frame_range.strip():
+            return
+        
+        # Submit repair job
+        try:
+            job_name = job.data.name
+            show_name = job.data.show
+            shot_name = job.data.shot
+            
+            # Find repair script
+            cuegui_dir = os.path.dirname(os.path.dirname(__file__))
+            opencue_root = os.path.dirname(cuegui_dir)
+            repair_script = os.path.join(opencue_root, "sandbox", "repair_blender_job.py")
+            
+            if not os.path.exists(repair_script):
+                QtWidgets.QMessageBox.warning(
+                    self._caller, "Repair Script Not Found",
+                    f"Could not find repair script at:\n{repair_script}\n\n"
+                    f"Please ensure repair_blender_job.py exists in the sandbox directory.",
+                    QtWidgets.QMessageBox.Ok)
+                return
+            
+            confirm_msg = (f"Force re-render frames: {frame_range}\n\n"
+                          f"Original job: {job_name}\nShow: {show_name}\nShot: {shot_name}\n\n"
+                          f"⚠️ This will re-render frames even if they succeeded.\n"
+                          f"A new repair job will be created.")
+            
+            if not cuegui.Utils.questionBoxYesNo(self._caller, "Confirm Force Re-render", confirm_msg):
+                return
+            
+            cmd = [sys.executable, repair_script, "--frames", frame_range,
+                   "--original-job", job_name, "--show", show_name,
+                   "--shot", shot_name, "--chunk", "1"]
+            
+            subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                           creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+            
+            QtWidgets.QMessageBox.information(
+                self._caller, "Force Re-render Submitted",
+                f"Force re-render job submitted for frames: {frame_range}\n\n"
+                f"Job name: {job_name}_repair\nCheck CueGUI for the new job.",
+                QtWidgets.QMessageBox.Ok)
+            
+        except Exception as e:
+            logger.exception("Failed to submit force re-render job")
+            QtWidgets.QMessageBox.critical(
+                self._caller, "Force Re-render Failed",
+                f"Failed to submit force re-render job:\n{str(e)}",
+                QtWidgets.QMessageBox.Ok)
 
     previewMain_info = ["Preview Main", None, "previewMain"]
 

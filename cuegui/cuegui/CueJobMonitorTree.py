@@ -23,6 +23,7 @@ from __future__ import print_function
 from builtins import str
 from builtins import map
 from collections import namedtuple
+import sys
 import time
 
 from qtpy import QtCore
@@ -71,6 +72,7 @@ class CueJobMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
     single_click = QtCore.Signal(object)
 
     def __init__(self, parent):
+        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
 
         self.__shows = {}
         self.currtime = time.time()
@@ -213,7 +215,7 @@ class CueJobMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
                                                group.data.department or ""))
             self.addColumn("", 0, id=21)
 
-        cuegui.AbstractTreeWidget.AbstractTreeWidget.__init__(self, parent)
+        self._finalizeColumns()
 
         self.setAnimated(False)
         self.setAcceptDrops(True)
@@ -247,8 +249,11 @@ class CueJobMonitorTree(cuegui.AbstractTreeWidget.AbstractTreeWidget):
         del col
         selected = [job.data.name for job in self.selectedObjects() if cuegui.Utils.isJob(job)]
         if selected:
+            mode = QtGui.QClipboard.Selection
+            if sys.platform.startswith('win'):
+                mode = QtGui.QClipboard.Clipboard
             QtWidgets.QApplication.clipboard().setText(
-                " ".join(selected), QtGui.QClipboard.Selection)
+                " ".join(selected), mode)
 
     def __itemSingleClickedComment(self, item, col):
         """If the comment column is clicked on, and there is a comment on the

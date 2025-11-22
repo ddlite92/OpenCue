@@ -312,7 +312,20 @@ def _serialize(launcher, use_pycuerun):
             sub_element(spec_layer, "cmd",
                         " ".join(build_command(launcher, layer)))
         else:
-            sub_element(spec_layer, "cmd", " ".join(layer.get_arg("command")))
+            # Use double quotes for Windows compatibility (batch files need double quotes)
+            import shlex
+            cmd_list = layer.get_arg("command")
+            # On Windows, use double quotes; shlex.quote uses single quotes on Unix
+            # We manually add double quotes around arguments containing spaces
+            quoted_args = []
+            for arg in cmd_list:
+                arg_str = str(arg)
+                if ' ' in arg_str or '"' in arg_str:
+                    # Escape existing double quotes and wrap in double quotes
+                    arg_str = '"' + arg_str.replace('"', '\\"') + '"'
+                quoted_args.append(arg_str)
+            quoted_cmd = " ".join(quoted_args)
+            sub_element(spec_layer, "cmd", quoted_cmd)
         sub_element(spec_layer, "range", str(frame_range))
         sub_element(spec_layer, "chunk", str(layer.get_chunk_size()))
 

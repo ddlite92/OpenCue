@@ -81,17 +81,29 @@ def __loadConfigFromFile():
 
 
 def __packaged_version():
+    """Return a version string from VERSION.in or package metadata.
+
+    Prefers the repository root VERSION.in. If not present (e.g. installed
+    wheel lacking the file), falls back to importlib.metadata version info.
+    """
     version_file_path = os.path.join(
         os.path.abspath(os.path.join(__file__, "../../..")), 'VERSION.in')
     try:
         with open(version_file_path, encoding='utf-8') as fp:
             version = fp.read().strip()
-        return version
+        if version:
+            return version
     except FileNotFoundError:
         print(f"VERSION.in not found at: {version_file_path}")
-    except Exception as e:
+    except Exception as e:  # pragma: no cover - defensive
         print(f"An unexpected error occurred while reading VERSION.in: {e}")
-    return None
+
+    # Fallback to package metadata
+    try:
+        from importlib.metadata import version as _pkg_version
+        return _pkg_version('cuegui')
+    except Exception:
+        return None
 
 
 def __get_version_from_cmd(command):
