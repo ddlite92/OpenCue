@@ -16,7 +16,10 @@ parent: Quick Starts
 - Windows 10/11 with WSL2 enabled
 - Docker Desktop for Windows
 - Git for Windows
-- Python 3.6+ (for CueGUI)
+- **Python 3.9** (required for Windows client components - see note below)
+
+{: .important }
+> **Python 3.9 Requirement:** Windows client components (rqd, cuegui, cuesubmit) specifically require Python 3.9.x. This is due to binary wheel availability and compatibility with native dependencies like PySide2. See the [monsta_venv setup](#option-2-using-monsta_venv-recommended-for-python-39) for an easy way to configure the correct environment.
 
 ## Setup Steps
 
@@ -67,9 +70,33 @@ You should see all services in "Up" state.
 
 ### 6. Install Python dependencies
 
+There are two options for setting up Python dependencies on Windows:
+
+#### Option 1: Standard pip install
+
 ```bash
 pip install pycue cuegui
 ```
+
+#### Option 2: Using monsta_venv (Recommended for Python 3.9)
+
+The `monsta_venv` directory provides a preconfigured Python 3.9 virtual environment setup specifically for Windows:
+
+1. Open PowerShell as Administrator
+2. Navigate to the OpenCue repository:
+   ```powershell
+   cd OpenCue\monsta_venv
+   ```
+3. Run the setup script:
+   ```powershell
+   .\setup_windows_venv.ps1
+   ```
+4. Activate the environment:
+   ```powershell
+   .\activate.ps1
+   ```
+
+See the [monsta_venv README](../../../monsta_venv/README.md) for detailed instructions and troubleshooting.
 
 ### 7. Configure environment
 
@@ -100,6 +127,18 @@ cuegui
 
 ## Troubleshooting
 
+### Python 3.9 Issues
+
+**Python version mismatch:**
+Windows client components require Python 3.9.x specifically. If you encounter module import errors or PySide2 issues:
+1. Install Python 3.9 from [python.org](https://www.python.org/downloads/release/python-3913/)
+2. Use the `monsta_venv` setup: `.\monsta_venv\setup_windows_venv.ps1`
+
+**PySide2 installation fails:**
+```powershell
+pip install PySide2==5.15.2.1
+```
+
 ### Docker not starting
 - Ensure virtualization is enabled in BIOS
 - Check that WSL2 is properly installed
@@ -114,8 +153,15 @@ cuegui
 - Allocate more resources to Docker Desktop in Settings
 - Use WSL2 backend for better performance
 
+### PowerShell script execution blocked
+Run PowerShell as Administrator and execute:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
 ## Next Steps
 
+- [monsta_venv README](../../../monsta_venv/README.md) - Detailed Windows Python 3.9 setup
 - [Installing CueSubmit](../getting-started/installing-cuesubmit.md)
 - [Submitting Jobs](../user-guides/submitting-jobs.md)
 - [Configuring RQD](../other-guides/customizing-rqd.md)
