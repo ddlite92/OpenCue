@@ -1,4 +1,4 @@
-#  Copyright Contributors to the OpenCue Project
+﻿#  Copyright Contributors to the OpenCue Project
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -27,14 +27,12 @@ import math
 from qtpy import QtCore
 from qtpy import QtGui
 from qtpy import QtWidgets
-from qtpy.QtCore import Signal  # type: ignore
-from qtpy.QtWidgets import QAction  # type: ignore
 import grpc
 
 import FileSequence
 from opencue_proto import job_pb2
 
-import cuegui.FrameMonitorTree  # type: ignore
+import cuegui.FrameMonitorTree
 import cuegui.FrameRangeSelection
 import cuegui.Logger
 
@@ -45,7 +43,7 @@ log = cuegui.Logger.getLogger(__file__)
 class FrameMonitor(QtWidgets.QWidget):
     """Widget for displaying a list of frames with controls at the top."""
 
-    handle_filter_layers_byLayer = Signal(list)
+    handle_filter_layers_byLayer = QtCore.Signal(list)
 
     def __init__(self, parent):
         QtWidgets.QWidget.__init__(self, parent)
@@ -56,8 +54,10 @@ class FrameMonitor(QtWidgets.QWidget):
         # Setup main vertical layout
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
         self.setLayout(layout)
+
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        self.layout().setSpacing(4)
 
         # This hlayout would contain any filter/control buttons
         hlayout = QtWidgets.QHBoxLayout()
@@ -73,10 +73,10 @@ class FrameMonitor(QtWidgets.QWidget):
         hlayout.addStretch()
         self._displayJobNameSetup(hlayout)
 
-        layout.addLayout(hlayout)
-        layout.addWidget(self.frameMonitorTree)
+        self.layout().addLayout(hlayout)
+        self.layout().addWidget(self.frameMonitorTree)
 
-        self._frameRangeSelectionFilterSetup(layout)
+        self._frameRangeSelectionFilterSetup(self.layout())
 
     def updateRequest(self):
         """Requests an update of the frame list."""
@@ -129,16 +129,11 @@ class FrameMonitor(QtWidgets.QWidget):
         self.frameMonitorTree.job_changed.connect(self._frameRangeSelectionFilterUpdate)
 
     def _frameRangeSelectionFilterUpdate(self):
-        job = self.frameMonitorTree.getJob()
-        if not job:
+        if not self.frameMonitorTree.getJob():
             self.frameRangeSelection.setFrameRange(["1", str(self.frameSearchLimit)])
         else:
-<<<<<<< HEAD
             try:
                 layers = self.frameMonitorTree.getJob().getLayers()
-=======
-            layers = job.getLayers()
->>>>>>> e3df1f17 (Update OpenCue UI and backend improvements)
 
                 _min = None
                 _max = None
@@ -171,26 +166,10 @@ class FrameMonitor(QtWidgets.QWidget):
                     log.warning(
                         "gRPC connection interrupted while updating frame range filter, will retry")
                 else:
-<<<<<<< HEAD
                     log.error("gRPC error in _frameRangeSelectionFilterUpdate: %s", e)
                 # pylint: enable=no-member
                 # Set a default range if we can't get layers
                 self.frameRangeSelection.setFrameRange(["1", str(self.frameSearchLimit)])
-=======
-                    _min = int(frameList[0])
-
-                if _max is not None:
-                    _max = max(_max, int(frameList[-1]))
-                else:
-                    _max = int(frameList[-1])
-
-            if _min == _max:
-                _max = (_max or 0) + 1
-
-            self.frameRangeSelection.default_select_size = self.frameSearchLimit // len(layers)
-
-            self.frameRangeSelection.setFrameRange([str(_min), str(_max)])
->>>>>>> e3df1f17 (Update OpenCue UI and backend improvements)
 
     def _frameRangeSelectionFilterHandle(self, start, end):
         self.frameMonitorTree.frameSearch.options['range'] = "%s-%s" % (start, end)
@@ -204,7 +183,7 @@ class FrameMonitor(QtWidgets.QWidget):
         @param layout: The layout to add the button to
         @type  layout: QLayout"""
         self.btn_refresh = QtWidgets.QPushButton("Refresh")
-        self.btn_refresh.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
+        self.btn_refresh.setFocusPolicy(QtCore.Qt.NoFocus)
         layout.addWidget(self.btn_refresh)
         self.btn_refresh.clicked.connect(self.frameMonitorTree.updateRequest)  # pylint: disable=no-member
         self.frameMonitorTree.updated.connect(self._refreshButtonDisableHandle)
@@ -226,7 +205,7 @@ class FrameMonitor(QtWidgets.QWidget):
         @param layout: The layout to add the button to
         @type  layout: QLayout"""
         btn = QtWidgets.QPushButton("Clear")
-        btn.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
+        btn.setFocusPolicy(QtCore.Qt.NoFocus)
         btn.setContentsMargins(0,0,0,0)
         layout.addWidget(btn)
         btn.clicked.connect(self._clearButtonHandle)  # pylint: disable=no-member
@@ -249,14 +228,14 @@ class FrameMonitor(QtWidgets.QWidget):
 
         # Previous page button
         self.prev_page_btn = QtWidgets.QPushButton("<")
-        self.prev_page_btn.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
+        self.prev_page_btn.setFocusPolicy(QtCore.Qt.NoFocus)
         self.prev_page_btn.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.prev_page_btn)
         self.prev_page_btn.clicked.connect(lambda: self._pageButtonsHandle(-1))  # pylint: disable=no-member
 
         # Next page button
         self.next_page_btn = QtWidgets.QPushButton(">")
-        self.next_page_btn.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
+        self.next_page_btn.setFocusPolicy(QtCore.Qt.NoFocus)
         self.next_page_btn.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.next_page_btn)
         self.next_page_btn.clicked.connect(lambda: self._pageButtonsHandle(1))  # pylint: disable=no-member
@@ -329,7 +308,7 @@ class FrameMonitor(QtWidgets.QWidget):
         @param layout: The layout to add the menu to
         @type  layout: QLayout"""
         btn = QtWidgets.QPushButton("Select Status")
-        btn.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
+        btn.setFocusPolicy(QtCore.Qt.NoFocus)
         btn.setContentsMargins(0,0,0,0)
         btn.setFlat(True)
 
@@ -363,7 +342,7 @@ class FrameMonitor(QtWidgets.QWidget):
         @param layout: The layout to add the menu to
         @type  layout: QLayout"""
         btn = QtWidgets.QPushButton("Filter Layers")
-        btn.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
+        btn.setFocusPolicy(QtCore.Qt.NoFocus)
         btn.setContentsMargins(0,0,0,0)
         btn.setFlat(True)
 
@@ -386,10 +365,9 @@ class FrameMonitor(QtWidgets.QWidget):
         else:
             menu = QtWidgets.QMenu(self)
             btn.setMenu(menu)
-            menu.triggered.connect(self._filterLayersHandle)  # type: ignore
+            menu.triggered[QtWidgets.QAction].connect(self._filterLayersHandle)  # pylint: disable=unsubscriptable-object
 
         if self.frameMonitorTree.getJob():
-<<<<<<< HEAD
             try:
                 layers = [x.data.name for x in self.frameMonitorTree.getJob().getLayers()]
             except grpc.RpcError as e:
@@ -403,15 +381,12 @@ class FrameMonitor(QtWidgets.QWidget):
                     log.error("gRPC error in _filterLayersUpdate: %s", e)
                 # pylint: enable=no-member
                 layers = []
-=======
-            layers = [x.data.name for x in self.frameMonitorTree.getJob().getLayers()]  # type: ignore
->>>>>>> e3df1f17 (Update OpenCue UI and backend improvements)
         else:
             layers = []
 
         for item in ["Clear", None ] + sorted(layers):
             if item:
-                a = QAction(menu)
+                a = QtWidgets.QAction(menu)
                 a.setText(item)
                 if item != "Clear":
                     a.setCheckable(True)
@@ -474,7 +449,7 @@ class FrameMonitor(QtWidgets.QWidget):
         @param layout: The layout to add the menu to
         @type  layout: QLayout"""
         btn = QtWidgets.QPushButton("Filter Status")
-        btn.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
+        btn.setFocusPolicy(QtCore.Qt.NoFocus)
         btn.setContentsMargins(0,0,0,0)
         btn.setFlat(True)
 
@@ -482,16 +457,16 @@ class FrameMonitor(QtWidgets.QWidget):
         btn.setMenu(menu)
         menu.triggered.connect(self._filterStatusHandle)  # pylint: disable=no-member
 
-        for item in [("Clear", QtCore.Qt.ALT | QtCore.Qt.Key_QuoteLeft),  # type: ignore
+        for item in [("Clear", QtCore.Qt.ALT | QtCore.Qt.Key_QuoteLeft),
                      None,
-                     ("Succeeded", QtCore.Qt.ALT | QtCore.Qt.Key_1),  # type: ignore
-                     ("Running", QtCore.Qt.ALT | QtCore.Qt.Key_2),  # type: ignore
-                     ("Waiting", QtCore.Qt.ALT | QtCore.Qt.Key_3),  # type: ignore
-                     ("Depend", QtCore.Qt.ALT | QtCore.Qt.Key_4),  # type: ignore
-                     ("Dead", QtCore.Qt.ALT | QtCore.Qt.Key_5),  # type: ignore
-                     ("Eaten", QtCore.Qt.ALT | QtCore.Qt.Key_6)]:  # type: ignore
+                     ("Succeeded", QtCore.Qt.ALT | QtCore.Qt.Key_1),
+                     ("Running", QtCore.Qt.ALT | QtCore.Qt.Key_2),
+                     ("Waiting", QtCore.Qt.ALT | QtCore.Qt.Key_3),
+                     ("Depend", QtCore.Qt.ALT | QtCore.Qt.Key_4),
+                     ("Dead", QtCore.Qt.ALT | QtCore.Qt.Key_5),
+                     ("Eaten", QtCore.Qt.ALT | QtCore.Qt.Key_6)]:
             if item:
-                a = QAction(item[0], menu)
+                a = QtWidgets.QAction(item[0], menu)
                 if item[0] != "Clear":
                     a.setCheckable(True)
                 if item[1]:
@@ -557,6 +532,6 @@ class FrameMonitor(QtWidgets.QWidget):
         """Updates the display job name label with the name of the current job."""
         if self.frameMonitorTree.getJob():
             self._displayJobNameLabel.setText(
-                "   <font color=\"green\">%s</font>   " % self.frameMonitorTree.getJob().data.name)  # type: ignore
+                "   <font color=\"green\">%s</font>   " % self.frameMonitorTree.getJob().data.name)
         else:
             self._displayJobNameLabel.clear()
