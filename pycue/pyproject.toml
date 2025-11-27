@@ -6,7 +6,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "opencue_pycue"
-dynamic = ["version"]
+version = "1.13.8"
+# dynamic = ["version"]  # Commented out for deployment without git
 dependencies = [
     "opencue_proto",
     "PyYAML==6.0.1",
@@ -18,10 +19,10 @@ description = "PyCue is the Python API client for OpenCue, providing programmati
 readme = "README.md"
 license = {text = "Apache-2.0"}
 
-[tool.hatch.version]
-source = "code"
-path = "../ci/generate_version_number.py"
-default-version = "0.0.0"
+# [tool.hatch.version]  # Commented out for deployment without git
+# source = "code"
+# path = "../ci/generate_version_number.py"
+# default-version = "0.0.0"
 
 [tool.hatch.build.targets.wheel]
 packages = ["opencue", "FileSequence"]
