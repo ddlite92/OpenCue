@@ -133,8 +133,8 @@ class CueSubmitWidget(QtWidgets.QWidget):
             'Job Name:',
             tooltip='Job names must be unique, have more than 3 characters, and contain no spaces.',
             completers=self.getFilteredHistorySetting('submit/jobName'),
-            validators=[Validators.matchNoSpecialCharactersOnly, Validators.moreThan3Chars,
-                        Validators.matchNoSpaces]
+            # validators=[Validators.matchNoSpecialCharactersOnly, Validators.moreThan3Chars, Validators.matchNoSpaces] # disabling to test
+                        
         )
         shows = Util.getShows()
         if not shows:

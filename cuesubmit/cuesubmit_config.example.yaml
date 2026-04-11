@@ -23,6 +23,7 @@ RENDER_CMDS:
     services:
       - "maya"
       - "arnold"
+      - "redshift"
     limits:
         - "arnold license limit"
     options:

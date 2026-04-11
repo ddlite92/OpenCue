@@ -34,6 +34,8 @@ import time
 from qtpy import QtCore
 from qtpy import QtGui
 from qtpy import QtWidgets
+from qtpy import QtGui
+from qtpy import QtWidgets
 import grpc
 
 import opencue
