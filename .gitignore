@@ -36,6 +36,7 @@ sandbox/zookeeper-data
 sandbox/zookeeper-logs
 docs/_data/version.yml
 target/*
+docs/_docs/dev_docs/*
 
 # Agent files
 AGENTS.md
